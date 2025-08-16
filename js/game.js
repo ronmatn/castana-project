@@ -7,6 +7,7 @@ class CastanasGame {
         this.gameStarted = false;
         this.gameEnded = false;
         this.timerInterval = null;
+        this.visibilityCheckInterval = null;
         this.totalChestnuts = 10;
         this.chestnutsEaten = 0;
         
@@ -22,6 +23,9 @@ class CastanasGame {
         this.particlesContainer = document.getElementById('success-particles');
         this.draggedElement = null;
         this.dragOffset = { x: 0, y: 0 };
+        
+        // Store original positions to prevent disappearing
+        this.originalPositions = new Map();
         
         this.initGame();
     }
@@ -46,6 +50,7 @@ class CastanasGame {
         this.startButton.style.display = 'none';
         this.instructionsElement.classList.add('hidden');
         this.startTimer();
+        this.startVisibilityCheck();
     }
     
     startTimer() {
@@ -57,6 +62,66 @@ class CastanasGame {
                 this.endGame();
             }
         }, 1000);
+    }
+    
+    startVisibilityCheck() {
+        this.visibilityCheckInterval = setInterval(() => {
+            this.checkChestnutVisibility();
+        }, 500); // Check every 500ms
+    }
+    
+    checkChestnutVisibility() {
+        if (!this.gameStarted || this.gameEnded) return;
+        
+        this.chestnuts.forEach(chestnut => {
+            // Skip chestnuts that have been eaten
+            if (chestnut.style.display === 'none' && chestnut.classList.contains('feeding')) {
+                return;
+            }
+            
+            // If a chestnut is invisible but shouldn't be, restore it
+            if ((chestnut.style.display === 'none' || chestnut.style.opacity === '0') && 
+                !chestnut.classList.contains('feeding')) {
+                console.warn('Restoring invisible chestnut:', chestnut.id);
+                this.restoreChestnutVisibility(chestnut);
+            }
+        });
+    }
+    
+    restoreChestnutVisibility(chestnut) {
+        const originalPos = this.originalPositions.get(chestnut.id);
+        
+        chestnut.style.display = 'block';
+        chestnut.style.opacity = '1';
+        chestnut.style.position = 'absolute';
+        chestnut.style.zIndex = '10';
+        chestnut.style.pointerEvents = 'auto';
+        chestnut.classList.remove('dragging');
+        
+        // Restore position
+        if (originalPos) {
+            if (originalPos.left !== 'auto' && originalPos.left !== '0px') {
+                chestnut.style.left = originalPos.left;
+                chestnut.style.right = 'auto';
+            } else if (originalPos.right !== 'auto' && originalPos.right !== '0px') {
+                chestnut.style.right = originalPos.right;
+                chestnut.style.left = 'auto';
+            } else {
+                if (originalPos.calculatedRight < originalPos.calculatedLeft) {
+                    chestnut.style.right = originalPos.calculatedRight + 'px';
+                    chestnut.style.left = 'auto';
+                } else {
+                    chestnut.style.left = originalPos.calculatedLeft + 'px';
+                    chestnut.style.right = 'auto';
+                }
+            }
+            
+            if (originalPos.top !== 'auto') {
+                chestnut.style.top = originalPos.top;
+            } else {
+                chestnut.style.top = originalPos.calculatedTop + 'px';
+            }
+        }
     }
     
     updateTimerDisplay() {
@@ -78,6 +143,11 @@ class CastanasGame {
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
             this.timerInterval = null;
+        }
+        
+        if (this.visibilityCheckInterval) {
+            clearInterval(this.visibilityCheckInterval);
+            this.visibilityCheckInterval = null;
         }
         
         this.disableChestnuts();
@@ -113,6 +183,11 @@ class CastanasGame {
             this.timerInterval = null;
         }
         
+        if (this.visibilityCheckInterval) {
+            clearInterval(this.visibilityCheckInterval);
+            this.visibilityCheckInterval = null;
+        }
+        
         this.updateDisplay();
         this.resetChestnuts();
         this.gameOverScreen.classList.add('hidden');
@@ -124,14 +199,43 @@ class CastanasGame {
     
     resetChestnuts() {
         this.chestnuts.forEach(chestnut => {
+            // Restore original position from stored values
+            const originalPos = this.originalPositions.get(chestnut.id);
+            
             chestnut.style.display = 'block';
             chestnut.style.opacity = '1';
             chestnut.style.transform = '';
             chestnut.style.position = 'absolute';
             chestnut.style.zIndex = '10';
-            chestnut.style.left = '';
-            chestnut.style.top = '';
             chestnut.style.pointerEvents = 'auto';
+            
+            // Restore original positioning with multiple fallback methods
+            if (originalPos) {
+                // Try computed styles first
+                if (originalPos.left !== 'auto' && originalPos.left !== '0px') {
+                    chestnut.style.left = originalPos.left;
+                    chestnut.style.right = 'auto';
+                } else if (originalPos.right !== 'auto' && originalPos.right !== '0px') {
+                    chestnut.style.right = originalPos.right;
+                    chestnut.style.left = 'auto';
+                } else {
+                    // Fallback to calculated positions
+                    if (originalPos.calculatedRight < originalPos.calculatedLeft) {
+                        chestnut.style.right = originalPos.calculatedRight + 'px';
+                        chestnut.style.left = 'auto';
+                    } else {
+                        chestnut.style.left = originalPos.calculatedLeft + 'px';
+                        chestnut.style.right = 'auto';
+                    }
+                }
+                
+                if (originalPos.top !== 'auto') {
+                    chestnut.style.top = originalPos.top;
+                } else {
+                    chestnut.style.top = originalPos.calculatedTop + 'px';
+                }
+            }
+            
             chestnut.classList.remove('dragging', 'feeding');
         });
     }
@@ -143,6 +247,33 @@ class CastanasGame {
     
     setupDragAndDrop() {
         this.chestnuts.forEach(chestnut => {
+            // Ensure chestnut is visible and positioned first
+            chestnut.style.display = 'block';
+            chestnut.style.position = 'absolute';
+            chestnut.style.pointerEvents = 'auto';
+            chestnut.style.opacity = '1';
+            chestnut.style.transform = '';
+            chestnut.style.zIndex = '10';
+            
+            // Force a reflow to ensure computed styles are accurate
+            chestnut.offsetHeight;
+            
+            // Store original computed position after ensuring proper display
+            const computedStyle = window.getComputedStyle(chestnut);
+            const rect = chestnut.getBoundingClientRect();
+            const containerRect = chestnut.parentElement.getBoundingClientRect();
+            
+            // Store both computed styles and calculated positions for redundancy
+            this.originalPositions.set(chestnut.id, {
+                left: computedStyle.left,
+                top: computedStyle.top,
+                right: computedStyle.right,
+                // Also store calculated positions relative to container
+                calculatedLeft: rect.left - containerRect.left,
+                calculatedTop: rect.top - containerRect.top,
+                calculatedRight: containerRect.right - rect.right
+            });
+            
             chestnut.addEventListener('mousedown', this.handleMouseDown.bind(this));
             chestnut.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
         });
@@ -172,6 +303,7 @@ class CastanasGame {
     handleTouchStart(e) {
         if (this.gameEnded) return;
         e.preventDefault();
+        e.stopPropagation();
         
         if (!this.gameStarted) {
             this.startGame();
@@ -182,6 +314,10 @@ class CastanasGame {
     }
     
     startDrag(element, clientX, clientY) {
+        // Ensure element is visible before starting drag
+        element.style.display = 'block';
+        element.style.opacity = '1';
+        
         this.draggedElement = element;
         const rect = element.getBoundingClientRect();
         
@@ -206,6 +342,7 @@ class CastanasGame {
     handleTouchMove(e) {
         if (this.draggedElement && this.gameStarted) {
             e.preventDefault();
+            e.stopPropagation();
             const touch = e.touches[0];
             this.updateElementPosition(touch.clientX, touch.clientY);
         }
@@ -226,6 +363,8 @@ class CastanasGame {
     
     handleTouchEnd(e) {
         if (this.draggedElement && this.gameStarted) {
+            e.preventDefault();
+            e.stopPropagation();
             const touch = e.changedTouches[0];
             this.endDrag(touch.clientX, touch.clientY);
         }
@@ -235,6 +374,7 @@ class CastanasGame {
         if (!this.draggedElement || this.gameEnded) return;
         
         const dropZoneRect = this.dropZone.getBoundingClientRect();
+        const currentDraggedElement = this.draggedElement; // Store reference before clearing
         
         if (this.isInsideDropZone(clientX, clientY, dropZoneRect)) {
             this.handleSuccessfulDrop();
@@ -242,9 +382,15 @@ class CastanasGame {
             this.resetChestnutPosition();
         }
         
-        if (this.draggedElement) {
-            this.draggedElement.style.pointerEvents = 'auto';
-            this.draggedElement.classList.remove('dragging');
+        // Clean up drag state
+        if (currentDraggedElement) {
+            currentDraggedElement.style.pointerEvents = 'auto';
+            currentDraggedElement.classList.remove('dragging');
+            // Ensure the element is visible after drag ends
+            if (currentDraggedElement.style.display !== 'none') {
+                currentDraggedElement.style.display = 'block';
+                currentDraggedElement.style.opacity = '1';
+            }
         }
         this.draggedElement = null;
     }
@@ -265,11 +411,19 @@ class CastanasGame {
     }
     
     handleSuccessfulDrop() {
-        this.draggedElement.classList.remove('dragging');
-        this.draggedElement.classList.add('feeding');
+        if (!this.draggedElement) return;
         
+        const elementToFeed = this.draggedElement;
+        
+        elementToFeed.classList.remove('dragging');
+        elementToFeed.classList.add('feeding');
+        
+        // Store reference to hide the element after animation
         setTimeout(() => {
-            this.draggedElement.style.display = 'none';
+            if (elementToFeed && elementToFeed.parentNode) {
+                elementToFeed.style.display = 'none';
+                elementToFeed.style.opacity = '0';
+            }
         }, 600);
         
         this.chestnutsEaten++;
@@ -307,9 +461,43 @@ class CastanasGame {
     }
     
     resetChestnutPosition() {
+        if (!this.draggedElement) return;
+        
+        const originalPos = this.originalPositions.get(this.draggedElement.id);
+        
         this.draggedElement.classList.remove('dragging');
         this.draggedElement.style.zIndex = '10';
         this.draggedElement.style.pointerEvents = 'auto';
+        this.draggedElement.style.position = 'absolute';
+        this.draggedElement.style.display = 'block';
+        this.draggedElement.style.opacity = '1';
+        
+        // Restore to original position using multiple fallback methods
+        if (originalPos) {
+            // Try computed styles first
+            if (originalPos.left !== 'auto' && originalPos.left !== '0px') {
+                this.draggedElement.style.left = originalPos.left;
+                this.draggedElement.style.right = 'auto';
+            } else if (originalPos.right !== 'auto' && originalPos.right !== '0px') {
+                this.draggedElement.style.right = originalPos.right;
+                this.draggedElement.style.left = 'auto';
+            } else {
+                // Fallback to calculated positions
+                if (originalPos.calculatedRight < originalPos.calculatedLeft) {
+                    this.draggedElement.style.right = originalPos.calculatedRight + 'px';
+                    this.draggedElement.style.left = 'auto';
+                } else {
+                    this.draggedElement.style.left = originalPos.calculatedLeft + 'px';
+                    this.draggedElement.style.right = 'auto';
+                }
+            }
+            
+            if (originalPos.top !== 'auto') {
+                this.draggedElement.style.top = originalPos.top;
+            } else {
+                this.draggedElement.style.top = originalPos.calculatedTop + 'px';
+            }
+        }
     }
     
     updateScore() {
@@ -376,5 +564,8 @@ class CastanasGame {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    new CastanasGame();
+    // Add small delay to ensure CSS is fully loaded
+    setTimeout(() => {
+        new CastanasGame();
+    }, 100);
 });

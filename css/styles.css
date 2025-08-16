@@ -11,8 +11,12 @@ body {
     font-family: 'Playfair Display', serif;
     background: #06402B;
     min-height: 100vh;
-    padding: 20px;
-    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #game-container {
@@ -184,7 +188,7 @@ body {
 /* Person/Target */
 .target-area {
     position: absolute;
-    bottom: 80px;
+    bottom: 10%;
     left: 50%;
     transform: translateX(-50%);
     z-index: 50;
@@ -510,63 +514,97 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    body {
+        padding: 0;
+        margin: 0;
+    }
+    
+    #game-container {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        border: none;
+    }
+    
     #background-text {
-        font-size: clamp(6rem, 12vw, 15rem);
+        font-size: clamp(4rem, 10vw, 12rem);
     }
     
     .instructions {
-        left: 15px;
-        top: 95px;
-        max-width: 250px;
-        padding: 15px 20px;
+        left: 10px;
+        top: 85px;
+        max-width: 200px;
+        padding: 10px 15px;
     }
     
     .instructions-content h3 {
-        font-size: 1.2em;
+        font-size: 1.1em;
     }
     
     .instructions-content p {
-        font-size: 0.9em;
+        font-size: 0.8em;
     }
     
     #game-ui {
-        padding: 0 20px;
-        height: 80px;
+        padding: 0 15px;
+        height: 70px;
     }
     
     #timer {
-        font-size: 2.2em;
-    }
-    
-    #score {
         font-size: 1.8em;
     }
     
+    #score {
+        font-size: 1.5em;
+    }
+    
     .game-button {
-        padding: 18px 30px;
-        font-size: 1.3em;
+        padding: 12px 20px;
+        font-size: 1.1em;
+    }
+    
+    .target-area {
+        bottom: 15%;
     }
     
     #person-head {
-        width: 110px;
-        height: 110px;
+        width: 100px;
+        height: 100px;
+    }
+    
+    .drop-zone {
+        width: 30px;
+        height: 20px;
     }
     
     .chestnut {
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
     }
     
+    /* Mobile-specific chestnut positioning */
+    #chestnut-1 { top: 100px; left: 20px; }
+    #chestnut-2 { top: 120px; right: 20px; }
+    #chestnut-3 { top: 200px; left: 50px; }
+    #chestnut-4 { top: 220px; right: 50px; }
+    #chestnut-5 { top: 80px; left: 150px; }
+    #chestnut-6 { top: 300px; right: 80px; }
+    #chestnut-7 { top: 140px; left: 250px; }
+    #chestnut-8 { top: 180px; left: 120px; }
+    #chestnut-9 { top: 260px; left: 180px; }
+    #chestnut-10 { top: 100px; right: 120px; }
+    
     .game-over-content {
-        padding: 30px;
-        margin: 20px;
+        padding: 20px;
+        margin: 10px;
+        max-width: 90vw;
     }
     
     .game-over-content h1 {
-        font-size: 2.5em;
+        font-size: 2em;
     }
     
     .final-score {
-        font-size: 1.5em;
+        font-size: 1.3em;
     }
 }
