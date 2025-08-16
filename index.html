@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Castañas Game</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="background-text">Castañas</div>
+        <div id="game-ui">
+            <div id="timer-display">
+                <span id="timer">20</span>
+            </div>
+            <button id="start-button" class="game-button">START</button>
+            <div id="score-display">
+                <span id="score">0</span>
+            </div>
+        </div>
+        
+        <div id="instructions" class="instructions">
+            <div class="instructions-content">
+                <h3>How to Play</h3>
+                <p>Drag chestnuts to the person's mouth to feed them!</p>
+                <p>You have 20 seconds to feed as many as possible.</p>
+                <p class="instruction-hint">Click START or drag any chestnut to begin</p>
+            </div>
+        </div>
+        
+        <div id="game-area">
+            <div id="person" class="target-area">
+                <div id="person-head">
+                    <div id="person-mouth" class="drop-zone"></div>
+                </div>
+                <div id="person-body"></div>
+            </div>
+            
+            <div class="chestnut draggable" id="chestnut-1"></div>
+            <div class="chestnut draggable" id="chestnut-2"></div>
+            <div class="chestnut draggable" id="chestnut-3"></div>
+            <div class="chestnut draggable" id="chestnut-4"></div>
+            <div class="chestnut draggable" id="chestnut-5"></div>
+            <div class="chestnut draggable" id="chestnut-6"></div>
+            <div class="chestnut draggable" id="chestnut-7"></div>
+            <div class="chestnut draggable" id="chestnut-8"></div>
+            <div class="chestnut draggable" id="chestnut-9"></div>
+            <div class="chestnut draggable" id="chestnut-10"></div>
+            
+            <div id="success-particles" class="particles"></div>
+        </div>
+        
+        <div id="game-over-screen" class="game-over hidden">
+            <div class="game-over-content">
+                <h1>Game Over!</h1>
+                <p class="final-score">Final Score: <span id="final-score">0</span></p>
+                <p class="game-over-message">Time to take vinitos!</p>
+                <button id="play-again-button" class="game-button">Play Again</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/game.js"></script>
+</body>
+</html>
